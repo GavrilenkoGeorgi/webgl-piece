@@ -7,6 +7,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useMapStore } from "../../stores/mapStore";
 import { useMapData } from "../../hooks/useMapData";
 import { useMapInteraction } from "../../hooks/useMapInteraction";
+import { useFpsMonitor } from "../../hooks/useFpsMonitor";
 import { LAYER_IDS } from "../../utils/constants";
 import styles from "./Map.module.css";
 
@@ -26,6 +27,7 @@ export default function MapView() {
   const selectedFeatureId = useMapStore((s) => s.selectedFeatureId);
   const updateViewState = useMapStore((s) => s.updateViewState);
   const { handleClick } = useMapInteraction();
+  const fps = useFpsMonitor(500);
 
   const { data: response, isLoading, isError, error } = useMapData();
 
@@ -67,6 +69,11 @@ export default function MapView() {
 
   return (
     <div className={styles.container}>
+      <div className={styles.fpsCounter}>
+        <span className={styles.fpsValue}>{fps}</span>
+        <span className={styles.fpsLabel}>FPS</span>
+      </div>
+
       {isLoading && (
         <div className={styles.overlay}>
           <span className={styles.spinner} />

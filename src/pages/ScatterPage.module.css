@@ -1,0 +1,46 @@
+.page {
+  display: flex;
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}
+
+.sidebar {
+  width: 320px;
+  min-width: 280px;
+  height: 100%;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  margin: 0;
+  padding: 20px 20px 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.info {
+  padding: 0 20px 20px;
+  border-top: 1px solid var(--color-border);
+  margin-top: auto;
+}
+
+.infoHeading {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+}
+
+.info p {
+  margin: 6px 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
