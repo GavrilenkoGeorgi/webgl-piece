@@ -5,6 +5,7 @@ const LINKS = [
   { to: "/", label: "Map" },
   { to: "/scatter", label: "3D Scatter" },
   { to: "/clusters", label: "Clustered" },
+  { to: "/hwm-logs", label: "HWM Logs" },
 ] as const;
 
 export default function Navigation() {
