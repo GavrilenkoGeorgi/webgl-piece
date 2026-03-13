@@ -2,3 +2,4 @@ export type { MapViewState, MapFilters } from "./map";
 export type { LayerConfig, GeoFeature, GeoFeatureCollection } from "./layers";
 export type { MapDataResponse, ApiError } from "./api";
 export type { ScatterPoint, ScatterDataConfig } from "./scatter";
+export type { HWMonitorColumn, HWMonitorData } from "./hwMonitor";
