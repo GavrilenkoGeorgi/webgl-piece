@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -9,7 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useHWMonitorStore } from "../../stores/hwMonitorStore";
-import type { MetricGroup } from "../../types/hwMonitor";
+import type { HWMonitorColumn, MetricGroup } from "../../types/hwMonitor";
 import styles from "./HWMonitorCharts.module.css";
 
 const LINE_COLORS = [
@@ -55,35 +56,41 @@ const GROUP_LABEL: Record<MetricGroup, string> = {
 };
 
 export default function HWMonitorCharts() {
-  const { data, selectedColumnIndices } = useHWMonitorStore();
+  const data = useHWMonitorStore((s) => s.data);
+  const selectedColumnIndices = useHWMonitorStore(
+    (s) => s.selectedColumnIndices,
+  );
+
+  const selectedCols = useMemo(() => {
+    if (!data) return [];
+    const indexSet = new Set(selectedColumnIndices);
+    return data.columns.filter((c) => indexSet.has(c.index));
+  }, [data, selectedColumnIndices]);
+
+  const orderedGroups = useMemo(() => {
+    const metricGroups = new Map<MetricGroup, HWMonitorColumn[]>();
+    for (const col of selectedCols) {
+      const key = col.metricGroup;
+      if (!metricGroups.has(key)) metricGroups.set(key, []);
+      metricGroups.get(key)!.push(col);
+    }
+    return GROUP_ORDER.filter((g) => metricGroups.has(g)).map(
+      (g) => [g, metricGroups.get(g)!] as const,
+    );
+  }, [selectedCols]);
+
+  const chartData = useMemo(() => {
+    if (!data) return [];
+    return data.rows.map((row) => {
+      const record: Record<string, number> = { time: row[0] };
+      for (const col of selectedCols) {
+        record[String(col.index)] = row[col.index] ?? 0;
+      }
+      return record;
+    });
+  }, [data, selectedCols]);
 
   if (!data || selectedColumnIndices.length === 0) return null;
-
-  const selectedCols = data.columns.filter((c) =>
-    selectedColumnIndices.includes(c.index),
-  );
-
-  // Group selected columns by metric group
-  const metricGroups = new Map<MetricGroup, typeof selectedCols>();
-  for (const col of selectedCols) {
-    const key = col.metricGroup;
-    if (!metricGroups.has(key)) metricGroups.set(key, []);
-    metricGroups.get(key)!.push(col);
-  }
-
-  // Sort groups into deterministic render order
-  const orderedGroups = GROUP_ORDER.filter((g) => metricGroups.has(g)).map(
-    (g) => [g, metricGroups.get(g)!] as const,
-  );
-
-  // Build flat record array for Recharts; use column index as string key
-  const chartData = data.rows.map((row) => {
-    const record: Record<string, number> = { time: row[0] };
-    for (const col of selectedCols) {
-      record[String(col.index)] = row[col.index] ?? 0;
-    }
-    return record;
-  });
 
   return (
     <div className={styles.charts}>

@@ -1,37 +1,53 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useHWMonitorStore } from "../../stores/hwMonitorStore";
 import { getRecommendedIndices } from "../../hooks/useHWMonitorData";
 import type { HWMonitorColumn } from "../../types/hwMonitor";
 import styles from "./HWMonitorColumnModal.module.css";
 
 export default function HWMonitorColumnModal() {
-  const { data, isModalOpen, closeModal, setSelectedColumnIndices } =
-    useHWMonitorStore();
-
-  const [prevData, setPrevData] = useState(data);
-  const [checked, setChecked] = useState<Set<number>>(
-    () => new Set(data ? getRecommendedIndices(data.columns) : []),
-  );
-  const [openGroup, setOpenGroup] = useState<string | null>(null);
-
-  if (isModalOpen && data !== prevData) {
-    setPrevData(data);
-    setChecked(new Set(data ? getRecommendedIndices(data.columns) : []));
-    // Open the first group when data changes
-    const devices = new Set(data?.columns.map((col) => col.device));
-    const firstDevice = devices.values().next().value ?? null;
-    setOpenGroup(firstDevice);
-  }
+  const data = useHWMonitorStore((s) => s.data);
+  const isModalOpen = useHWMonitorStore((s) => s.isModalOpen);
 
   if (!isModalOpen || !data) return null;
 
-  // Group columns by device name
-  const groups = new Map<string, HWMonitorColumn[]>();
-  for (const col of data.columns) {
-    const key = col.device;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(col);
-  }
+  return <HWMonitorColumnModalContent data={data} />;
+}
+
+type HWMonitorColumnModalContentProps = {
+  data: {
+    columns: HWMonitorColumn[];
+    // add other fields from your store data type if needed
+  };
+};
+
+function HWMonitorColumnModalContent({
+  data,
+}: HWMonitorColumnModalContentProps) {
+  const closeModal = useHWMonitorStore((s) => s.closeModal);
+  const setSelectedColumnIndices = useHWMonitorStore(
+    (s) => s.setSelectedColumnIndices,
+  );
+
+  const columns = data.columns;
+
+  const [checked, setChecked] = useState<Set<number>>(
+    () => new Set(getRecommendedIndices(columns)),
+  );
+  const [openGroup, setOpenGroup] = useState<string | null>(
+    () => columns[0]?.device ?? null,
+  );
+
+  const groups = useMemo(() => {
+    const m = new Map<string, HWMonitorColumn[]>();
+
+    for (const col of columns) {
+      const key = col.device;
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(col);
+    }
+
+    return m;
+  }, [columns]);
 
   function toggle(index: number) {
     setChecked((prev) => {
@@ -86,13 +102,16 @@ export default function HWMonitorColumnModal() {
             ✕
           </button>
         </div>
+
         <p className={styles.hint}>
-          {checked.size} of {data.columns.length} columns selected
+          {checked.size} of {columns.length} columns selected
         </p>
+
         <div className={styles.body}>
           {Array.from(groups.entries()).map(([device, cols]) => {
             const allOn = cols.every((c) => checked.has(c.index));
             const someOn = cols.some((c) => checked.has(c.index));
+
             return (
               <div key={device} className={styles.group}>
                 <div
@@ -115,6 +134,7 @@ export default function HWMonitorColumnModal() {
                     {openGroup === device ? "▼" : "▶"}
                   </span>
                 </div>
+
                 {openGroup === device && (
                   <div className={styles.columnList}>
                     {cols.map((col) => (
@@ -134,6 +154,7 @@ export default function HWMonitorColumnModal() {
             );
           })}
         </div>
+
         <div className={styles.footer}>
           <button className={styles.cancelBtn} onClick={closeModal}>
             Cancel

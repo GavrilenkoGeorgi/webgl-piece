@@ -35,3 +35,43 @@ export interface HWMonitorData {
    */
   rows: number[][];
 }
+
+// --------------- Ingest lifecycle ---------------
+
+export type IngestPhase =
+  | "idle"
+  | "preparing"
+  | "parsing"
+  | "columnsReady"
+  | "rowsStreaming"
+  | "ready"
+  | "error";
+
+// --------------- Worker message protocol ---------------
+
+export interface WorkerColumnsMessage {
+  type: "columns";
+  columns: HWMonitorColumn[];
+  totalRows: number;
+}
+
+export interface WorkerRowsMessage {
+  type: "rows";
+  rows: number[][];
+  progress: number; // 0–1
+}
+
+export interface WorkerDoneMessage {
+  type: "done";
+}
+
+export interface WorkerErrorMessage {
+  type: "error";
+  error: string;
+}
+
+export type WorkerOutMessage =
+  | WorkerColumnsMessage
+  | WorkerRowsMessage
+  | WorkerDoneMessage
+  | WorkerErrorMessage;

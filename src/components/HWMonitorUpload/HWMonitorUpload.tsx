@@ -1,30 +1,38 @@
 import { useRef, useState, type DragEvent, type ChangeEvent } from "react";
 import { useHWMonitorData } from "../../hooks/useHWMonitorData";
+import { useHWMonitorStore } from "../../stores/hwMonitorStore";
 import styles from "./HWMonitorUpload.module.css";
 
 export default function HWMonitorUpload() {
   const { loadFile } = useHWMonitorData();
+  const ingestPhase = useHWMonitorStore((s) => s.ingestPhase);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  const disabled =
+    ingestPhase !== "idle" &&
+    ingestPhase !== "ready" &&
+    ingestPhase !== "error";
 
   function handleDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setIsDragging(false);
+    if (disabled) return;
     const file = e.dataTransfer.files[0];
     if (file) loadFile(file);
   }
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    if (disabled) return;
     const file = e.target.files?.[0];
     if (file) loadFile(file);
-    // Reset so the same file can be selected again
     e.target.value = "";
   }
 
   return (
     <div
       className={`${styles.dropzone} ${isDragging ? styles.dragging : ""}`}
-      onClick={() => inputRef.current?.click()}
+      onClick={() => !disabled && inputRef.current?.click()}
       onDragOver={(e) => {
         e.preventDefault();
         setIsDragging(true);
@@ -33,7 +41,9 @@ export default function HWMonitorUpload() {
       onDrop={handleDrop}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
+      onKeyDown={(e) =>
+        e.key === "Enter" && !disabled && inputRef.current?.click()
+      }
     >
       <input
         ref={inputRef}
