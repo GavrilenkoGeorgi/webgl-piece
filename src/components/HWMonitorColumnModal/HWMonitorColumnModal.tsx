@@ -24,6 +24,9 @@ function HWMonitorColumnModalContent({
   data,
 }: HWMonitorColumnModalContentProps) {
   const closeModal = useHWMonitorStore((s) => s.closeModal);
+  const selectedColumnIndices = useHWMonitorStore(
+    (s) => s.selectedColumnIndices,
+  );
   const setSelectedColumnIndices = useHWMonitorStore(
     (s) => s.setSelectedColumnIndices,
   );
@@ -31,7 +34,12 @@ function HWMonitorColumnModalContent({
   const columns = data.columns;
 
   const [checked, setChecked] = useState<Set<number>>(
-    () => new Set(getRecommendedIndices(columns)),
+    () =>
+      new Set(
+        selectedColumnIndices.length > 0
+          ? selectedColumnIndices
+          : getRecommendedIndices(columns),
+      ),
   );
   const [openGroup, setOpenGroup] = useState<string | null>(
     () => columns[0]?.device ?? null,
